@@ -1,0 +1,11 @@
+{
+  "name": "rankforge",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "description": "SEO planner & analyzer skills for AI agents. The scripts run on plain Node 18+; Playwright is only needed for browser SERP mode (Google).",
+  "engines": { "node": ">=18" },
+  "optionalDependencies": {
+    "playwright": "1.49.1"
+  }
+}

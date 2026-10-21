@@ -25,10 +25,11 @@ export const today = () => new Date().toISOString().slice(0, 10);
 // --- HTTP ---------------------------------------------------------------------
 const UA = 'Mozilla/5.0 (compatible; rankforge-keyword-research; +https://github.com/omarijbara/rankforge)';
 /** GET with timeout and polite retry on 429/5xx. Returns parsed JSON (default) or text. */
-export async function get(url, { json = true, retries = 2, timeout = 15000 } = {}) {
+export const BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36';
+export async function get(url, { json = true, retries = 2, timeout = 15000, headers = {} } = {}) {
   for (let attempt = 0; ; attempt++) {
     try {
-      const res = await fetch(url, { headers: { 'User-Agent': UA, Accept: json ? 'application/json' : '*/*' }, signal: AbortSignal.timeout(timeout) });
+      const res = await fetch(url, { headers: { 'User-Agent': UA, Accept: json ? 'application/json' : '*/*', ...headers }, signal: AbortSignal.timeout(timeout) });
       if ((res.status === 429 || res.status >= 500) && attempt < retries) { await sleep(1500 * (attempt + 1)); continue; }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return json ? await res.json() : await res.text();
@@ -87,6 +88,8 @@ export function writeCsv(file, header, rows) {
   fs.mkdirSync(path.dirname(path.resolve(file)), { recursive: true });
   fs.writeFileSync(file, [header.join(';'), ...rows.map((r) => header.map((h) => cell(r[h])).join(';'))].join('\n') + '\n');
 }
+
+export const stripTags = (s) => decodeEntities(String(s ?? '').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
 
 // --- site content (own pages or competitors) ----------------------------------
 const SKIP_PATH = /\/(tag|tags|category|categories|kategorie|author|autor|page|seite|feed|wp-content|cart|checkout|account|login|search|suche)(\/|$)/i;

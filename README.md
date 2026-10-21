@@ -10,7 +10,7 @@ node skills/keyword-research/scripts/research.mjs \
   --seeds "cookie banner,barrierefreie website" --lang de --country de \
   --site https://your-site.de --competitors "rival-a.de,rival-b.de"
 ```
-In a few minutes, with no API keys, you get `research-<date>/keywords.csv` and a `report.md` with:
+Add `--serp ddg` (or `--serp-import captured.json` from an agent's browser) to read the live results pages too. In a few minutes, with no API keys, you get `research-<date>/keywords.csv` and a `report.md` with:
 - **Real phrases** from 5–6 platforms, clustered by intent (one cluster = one page)
 - **Your pages to improve first**: phrases you already have a page for (update beats duplicate)
 - **Comparisons buyers weigh** ("real cookie banner vs borlabs"), **video demand** (YouTube), **buying demand** (Amazon)
@@ -30,6 +30,7 @@ Then your agent does what tools can't: checks the SERPs, judges fit and difficul
 | **Seasonality & fading topics** | Wikipedia page views show peak months (Black Friday: 8×) and topics losing 30–50 % of interest year over year. |
 | **Validated competitor gaps** | Topics several competitors invested in that you don't cover, from sitemaps, or RSS feeds when sitemaps are blocked. |
 | **Pain mining** | StackExchange questions with view counts, Hacker News discussions. |
+| **Live SERP reading** | "People also ask", related searches, **Google AI Overview sub-headings** (an outline of what a complete answer needs), winning format and difficulty from who ranks. Agent-native (any agent's browser + `serp-extract.js`), Playwright, native HTTP, or official APIs (Brave, Google Programmable Search). |
 
 ## Why
 AI agents are fast at producing keyword lists and articles, and just as fast at producing **made-up search volumes, duplicate pages and off-brand content at scale**, the pattern Google's spam and core updates punish. RankForge bakes in the discipline: real signals with labeled estimates, one intent per URL, cannibalization checks, fit and penalty-risk rules, answer-engine-ready briefs, and proven rules for scheduled research and publishing agents.
@@ -45,6 +46,8 @@ skills/keyword-research/
 │   ├── pageviews.mjs           measured interest, YoY trend, peak month (Wikimedia API)
 │   ├── questions.mjs           StackExchange (with views) + Hacker News
 │   ├── gap.mjs                 competitor content gap from sitemaps/feeds
+│   ├── serp.mjs                read SERPs: PAA, related, AI-overview outline, format, difficulty
+│   ├── serp-extract.js         in-page extractor for any agent browser tool / Playwright
 │   ├── cluster.mjs             intent-aware clustering
 │   ├── overlap.mjs             cannibalization check vs a folder, sitemap or domain
 │   └── lib.mjs                 shared helpers
@@ -75,6 +78,14 @@ See [`adapters/chatgpt/`](adapters/chatgpt/README.md): paste the instructions an
 ### Gemini CLI, Cursor, Copilot, Windsurf, open-source agents
 Clone the repo into the workspace. `AGENTS.md` / `GEMINI.md` tell the agent to load `skills/keyword-research/SKILL.md` for SEO and keyword work.
 
+## Reading Google natively
+Search engines block automated scrapers, and RankForge never tries to defeat bot checks. The reliable way to read Google is to let your **AI agent use its own browser** like a person:
+1. The agent opens `google.com/search?q=…&hl=de&gl=de` in its browser tool (Claude in Chrome, Claude app browser, ChatGPT Agent, Playwright MCP…).
+2. It runs [`serp-extract.js`](skills/keyword-research/scripts/serp-extract.js) in the page and gets People also ask, related searches, AI Overview subtopics, the top 10 and SERP features as JSON.
+3. `node scripts/serp.mjs --import captured.json` turns that into new keywords, an outline checklist and difficulty hints.
+
+Prefer scripts? `serp.mjs --engine google --wait-for-human` drives a real Chromium via Playwright (`npm install` in this repo first) and pauses for you if a human check appears. For volume, use the official APIs: `--engine brave` or `--engine google-api`.
+
 ## Individual tools
 ```bash
 S=skills/keyword-research/scripts
@@ -82,6 +93,7 @@ node $S/signals.mjs suggest --seeds "website redesign" --lang en --country us --
 node $S/pageviews.mjs --topics "content management system,black friday" --lang en
 node $S/questions.mjs --seeds "website redesign seo" --hn --since 2023
 node $S/gap.mjs --competitors "rival-a.com,rival-b.com" --mine https://your-site.com
+node $S/serp.mjs --queries "website redesign cost" --engine ddg          # or --import captured.json / --engine google --wait-for-human
 node $S/cluster.mjs --in signals.json --out clustered.csv
 node $S/overlap.mjs --keywords clustered.csv --titles ./src/content
 ```
@@ -102,3 +114,4 @@ PRs welcome: more languages for the question/modifier/compare lists in `signals.
 
 ## License
 MIT © Omar Ijbara
+

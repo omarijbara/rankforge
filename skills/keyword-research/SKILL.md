@@ -66,7 +66,11 @@ The individual methods, strongest first. `references/demand-signals.md` explains
 5. **Real questions with view counts:** StackExchange (views = people who had this exact problem) and Hacker News. Best for FAQ sections, problem/solution articles and answer-engine visibility. Mostly English; translate the intent, then confirm local wording with step 2.
    `node scripts/questions.mjs --seeds "…" --hn --since 2023`
 6. **Trends:** today's trending searches. `node scripts/signals.mjs trends --country de`. Mostly news and celebrities, so filter hard for fit.
-7. **SERPs** (web search/browsing): what ranks, which formats win, "People also ask". Do this for every cluster you plan to act on.
+7. **SERPs: what ranks, plus keywords only the results page shows.** "People also ask", related searches, AI Overview sub-headings (an outline of what a complete answer needs), winning format, difficulty from who ranks. Do this for every cluster you plan to act on. See `references/agent-browser-serp.md`:
+   - **Agent with a browser tool (best for Google):** open the results page, run `scripts/serp-extract.js` in it, collect the JSON, then `node scripts/serp.mjs --import captured.json`.
+   - **Scripts:** `node scripts/serp.mjs --queries "…" --engine ddg` (native) · `--engine brave` / `google-api` (official APIs, own key) · `--engine google --wait-for-human` (Playwright; you pass any check yourself).
+   - In the pipeline: `research.mjs … --serp ddg` or `--serp-import captured.json`.
+   If a CAPTCHA appears, stop. Never try to solve or bypass bot checks.
 
 Trending or news-driven topics are useful but perishable. Record the date found and the source, and give them an expiry (default 30 days). Phrase them so the page stays useful after the news fades ("Google AI Mode: what changes for local business websites", not "Google launched X today").
 
@@ -111,7 +115,7 @@ Produce the outputs described in `references/output-formats.md`:
 
 1. **Keyword map** as a CSV using `templates/keywords.csv` (one row per keyword, cluster, target URL, action), so a human or a publishing pipeline can use it.
 2. **Plan summary:** the 10–20 next actions in order, each with the reason why.
-3. **Content briefs** for the top items, if asked: primary and secondary keywords, intent, the one-sentence answer to put first, outline, questions to answer, internal links, and what the page must do better than what ranks now.
+3. **Content briefs** for the top items, if asked: primary and secondary keywords, intent, the one-sentence answer to put first, outline (start from the AI Overview subtopics in `serp-outline.csv` and add what they miss), questions to answer (PAA), internal links, and what the page must do better than what ranks now.
 
 Keep the summary skimmable: lead with the decisions, then the evidence.
 
@@ -133,3 +137,4 @@ Research goes stale. When asked to keep it going, or when running on a schedule:
 - add only what is new versus the existing map and published pages;
 - expire trend rows after their window if nobody used them;
 - pull Search Console again and move queries that now rank 8–30 into "update" actions.
+

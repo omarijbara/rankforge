@@ -1,6 +1,6 @@
 {
   "name": "rankforge",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "SEO planner & analyzer skills for AI agents. Starts with keyword-research: real demand signals, intent, clustering, cannibalization checks, penalty-safe content plans.",
   "author": { "name": "Omar Ijbara", "url": "https://github.com/omarijbara" },
   "homepage": "https://github.com/omarijbara/rankforge",
@@ -8,4 +8,5 @@
   "license": "MIT",
   "keywords": ["seo", "keyword-research", "content-strategy", "aeo", "geo", "agent-skills"]
 }
+
 

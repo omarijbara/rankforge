@@ -15,6 +15,9 @@
  *   5 pageviews.mjs        measured interest, trend and seasonality for the biggest clusters
  *   6 questions.mjs        real questions with view counts (default for English, --questions to force)
  *   7 gap.mjs              competitor topics you don't cover (with --competitors and --site)
+ *   8 serp.mjs             what ranks for the biggest clusters: format, difficulty, PAA/related keywords, AI-overview outline
+ *                          (--serp ddg | bing --browser | google [--wait-for-human] | brave | google-api, or
+ *                           --serp-import captured.json from an agent's own browser via serp-extract.js)
  * and merges everything into
  *   keywords.csv  — the RankForge keyword map, PRE-FILLED: intent/funnel/format/business_value are heuristic
  *                   guesses from the wording and platform; fit and difficulty are left as "?" on purpose.
@@ -58,6 +61,11 @@ const pvTopics = [...new Set([...seeds, ...bigClusters])];
 const havePv = !a['no-pageviews'] && step('Wikipedia interest, trend and seasonality', 'pageviews.mjs', ['--topics', pvTopics.join(','), '--lang', lang, '--out', f('pageviews.csv')]);
 const haveQ = Boolean(a.questions || lang === 'en') && step('Real questions (StackExchange, Hacker News)', 'questions.mjs', ['--seeds', seeds.join(','), '--hn', '--out', f('questions.csv')]);
 const haveGap = Boolean(a.competitors && a.site) && step('Competitor content gap', 'gap.mjs', ['--competitors', a.competitors, '--mine', a.site, '--out', f('gap.csv')]);
+// --serp ddg | bing --browser | google | brave | google-api  ·  --serp-import captured.json (agent's own browser)
+const serpArgs = a['serp-import'] ? ['--import', a['serp-import']]
+  : a.serp ? ['--queries', bigClusters.slice(0, Number(a['serp-limit'] || 8)).join(','), '--engine', String(a.serp), '--lang', lang, '--country', cc,
+    ...(a.browser ? ['--browser'] : []), ...(a['wait-for-human'] ? ['--wait-for-human'] : [])] : null;
+const haveSerp = Boolean(serpArgs) && step('Reading search results pages', 'serp.mjs', [...serpArgs, '--out', f('serp.json')]) && fs.existsSync(f('serp-summary.csv'));
 
 // --- merge -----------------------------------------------------------------------
 const overlap = new Map(haveOverlap ? readTable(f('overlap.csv')).rows.map((r) => [r.keyword, r]) : []);
@@ -79,6 +87,7 @@ const formatOf = (k, hints) => (!GRAMMAR.test(k) && /\b(vs|oder|alternative|verg
   : RX.transactional.test(k) ? 'service-page' : hints.length === 1 && hints[0] === 'video/how-to' ? 'video' : 'guide');
 const VALUE = { transactional: 'high', local: 'high', commercial: 'high', informational: 'medium' };
 
+const serpSum = new Map(haveSerp ? readTable(f('serp-summary.csv')).rows.map((s) => [s.query, s]) : []);
 const rows = clustered.map((r) => {
   const hints = String(r.hints || '').split('+').filter(Boolean);
   const platforms = Number(r.platforms) || 0, hits = Number(r.hits) || 0;
@@ -90,7 +99,8 @@ const rows = clustered.map((r) => {
     p ? `wikipedia ${p.avg_monthly_views}/mo ${p.trend}${p.peak_month ? ` peak ${p.peak_month}` : ''}` : '', 'intent/format/value = heuristic, verify SERP'].filter(Boolean).join(' | ');
   return {
     keyword: r.keyword, cluster: r.cluster, intent, funnel: FUNNEL[intent], format: formatOf(r.keyword, hints), demand,
-    demand_source: `autocomplete:${r.sources || ''}${p ? '+wikipedia' : ''}`, business_value: VALUE[intent], fit: '?', difficulty: '?', priority: '',
+    demand_source: `autocomplete:${r.sources || ''}${p ? '+wikipedia' : ''}`, business_value: VALUE[intent], fit: '?',
+    difficulty: serpSum.get(r.cluster)?.difficulty_hint ? `${serpSum.get(r.cluster).difficulty_hint.split(' ')[0]} (serp)` : '?', priority: '',
     target_url: ov && ov.suggestion !== 'new' ? ov.closest_ref : '', action: ov ? ov.suggestion : 'new',
     notes, found: today(), platforms, hits, cluster_size: r.cluster_size, trend: p?.trend || '', peak_month: p?.peak_month || '',
   };
@@ -127,6 +137,18 @@ if (pv.length) md.push('## Measured interest (Wikipedia page views)', '',
   '', '_Seasonality ≥ 1.5: publish or refresh 4–8 weeks before the peak month._', '');
 if (haveQ) { const q = readTable(f('questions.csv')).rows.slice(0, 15); if (q.length) md.push('## Real questions (with views)', '', ...q.map((x) => `- ${x.question}${x.views ? ` (${x.views} views)` : ''}: ${x.source}`), ''); }
 if (haveGap) { const g = readTable(f('gap.csv')).rows.filter((r) => Number(r.covered_pct) < 50).slice(0, 20); if (g.length) md.push('## Competitor gaps (they cover it, you don\'t)', '', table(g.map((r) => [r.topic, r.competitor_count, `${r.covered_pct}%`]), ['topic', 'competitors', 'your coverage']), ''); }
+if (haveSerp) {
+  const ss = readTable(f('serp-summary.csv')).rows;
+  md.push('## What ranks now (search results pages)', '',
+    table(ss.map((s) => [s.query, s.engine, s.dominant_format, s.difficulty_hint, s.features || '–', s.top_domains.split(' ').slice(0, 3).join(', ')]),
+      ['query', 'engine', 'winning format', 'difficulty', 'features', 'top domains']), '');
+  const sk = fs.existsSync(f('serp-keywords.csv')) ? readTable(f('serp-keywords.csv')).rows : [];
+  if (sk.length) md.push('## New keywords from the SERPs (People also ask, related searches)', '', ...sk.slice(0, 25).map((k) => `- ${k.keyword} _(${k.source}, from "${k.query}")_`), '');
+  if (fs.existsSync(f('serp-outline.csv'))) {
+    const byQ = new Map(); for (const o of readTable(f('serp-outline.csv')).rows) { if (!byQ.has(o.query)) byQ.set(o.query, []); byQ.get(o.query).push(o.subtopic); }
+    md.push('## What Google\'s AI Overview covers (use as an outline checklist)', '', ...[...byQ].map(([q, s]) => `- **${q}:** ${s.join(' · ')}`), '');
+  }
+}
 if (haveTrends) {
   const S = new Set(seeds.flatMap((s) => [...tokens(s, { dropFiller: true })]));
   // on-topic = the trending term itself shares a seed word, or its headlines share at least two different seed words

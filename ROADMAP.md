@@ -4,8 +4,8 @@ Each item becomes its own skill under `skills/`, sharing the same principles and
 
 | Status | Skill | What it will do |
 |---|---|---|
-| ✅ v0.2 | `keyword-research` | 9 free demand sources, one-command pipeline, intent clustering, cannibalization, competitor gaps, seasonality, fit/risk, keyword map and briefs |
-| 🔜 | `serp-analyzer` | Analyze the live results for a keyword: formats, intent mix, who ranks, content gaps, "what we must do better" |
+| ✅ v0.3 | `keyword-research` | 9 free demand sources, live SERP reading (agent-native, Playwright, APIs), one-command pipeline, intent clustering, cannibalization, competitor gaps, seasonality, AI-Overview outlines, fit/risk, keyword map and briefs |
+| 🟡 started in v0.3 | `serp-analyzer` | Analyze the live results for a keyword: formats, intent mix, who ranks, content gaps, "what we must do better" |
 | 🔜 | `content-brief` | Turn a cluster into a complete writer/agent brief (AEO-first structure, sources to cite, internal links) |
 | 🔜 | `search-console-analyst` | Striking-distance queries, decaying pages, cannibalization from real GSC data, quick-win list |
 | 🔜 | `site-audit` | Technical SEO: indexability, redirects, canonicals, sitemaps, Core Web Vitals, structured data, llms.txt |
@@ -16,4 +16,5 @@ Each item becomes its own skill under `skills/`, sharing the same principles and
 | 🔜 | `publishing-pipeline` | Reference setup for scheduled scout + publisher agents with gates, logs and caps |
 
 Ideas and PRs welcome. Open an issue describing the job the skill should do and how you'd judge a good result.
+
 
