@@ -1,0 +1,13 @@
+{
+  "name": "rankforge",
+  "description": "RankForge: SEO planner & analyzer skills for AI agents.",
+  "owner": { "name": "Omar Ijbara", "url": "https://github.com/omarijbara" },
+  "plugins": [
+    {
+      "name": "rankforge",
+      "source": "./",
+      "description": "SEO planner & analyzer skills for AI agents: keyword research with real demand signals, intent, clustering and penalty-safe content plans."
+    }
+  ]
+}
+

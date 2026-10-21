@@ -1,0 +1,10 @@
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
+# local research outputs
+signals.json
+trends.json
+clustered.csv
+overlap.csv
+*-workspace/
