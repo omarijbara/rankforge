@@ -17,9 +17,11 @@ Use `templates/keywords.csv`. Semicolon-separated (commas appear in keywords; se
 | difficulty | low / medium / high (who ranks now; say why in notes) |
 | priority | 1–27 (business_value × winnability × fit, each 1–3) |
 | target_url | an existing URL to update, or the proposed new slug |
-| action | update / new / merge / skip |
+| action | update / review / new / merge / skip |
 | notes | the reason: SERP observation, overlap %, trend source, risks |
 | found | YYYY-MM-DD |
+
+`research.mjs` appends evidence columns after these: `platforms`, `hits`, `cluster_size`, `trend`, `peak_month`. Keep them; they explain the demand label.
 
 ## 2. Plan summary (Markdown)
 ```
@@ -49,3 +51,4 @@ Internal links: to … / from …
 CTA: …
 Do not: <claims we can't make, YMYL cautions>
 ```
+

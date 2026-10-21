@@ -46,15 +46,27 @@ Add modifiers that reveal intent: cost/price, near me / city, best / comparison 
 
 ## Step 2 — Collect real demand signals
 
-Prefer signals in this order. Read `references/demand-signals.md` for how to interpret each source and what it cannot tell you.
+**Fast path (can run code + internet):** one command gathers everything below and drafts the keyword map:
+```
+node scripts/research.mjs --seeds "website relaunch,bfsg website" --lang de --country de \
+     --site <content folder | sitemap URL | domain> --competitors "rival-a.de,rival-b.de" [--depth 2]
+```
+It writes `research-<date>/keywords.csv` (pre-filled: real phrases, clusters, heuristic intent/format/value, action vs your pages, interest trend) and `report.md` (top clusters, pages to update, comparisons, video and product demand, measured interest and seasonality, real questions, competitor gaps, on-topic trends). Read the report, then continue with Step 3. The heuristics are drafts; your SERP check and judgment decide.
+
+The individual methods, strongest first. `references/demand-signals.md` explains what each proves and what it can't:
 
 1. **Search Console** (if available): queries with impressions where the site ranks ~8–30 are "striking distance". Usually the fastest wins come from improving an existing page, not writing a new one.
-2. **Autocomplete expansion:** real phrases people type.
-   `node scripts/signals.mjs suggest --lang de --country de --seeds "website erstellen lassen,bfsg website" --expand questions,alphabet --out signals.json`
-3. **Trends:** what is rising now in the market.
-   `node scripts/signals.mjs trends --country de --out trends.json`. These are general trending searches; most are off-topic, so filter hard for fit.
-4. **Competitors and SERPs:** what ranks for your seeds, which formats win (guide, tool, list, category page, video), and topics competitors cover that the site doesn't.
-5. **Questions:** "People also ask", forum and community questions. These are good for FAQ sections and answer-engine visibility.
+2. **Multi-platform autocomplete:** real phrases people type, from Google, Bing, DuckDuckGo, YouTube, Amazon and Wikipedia. *Where* a phrase appears is an intent signal (YouTube = how-to/video, Amazon = buying, Wikipedia = definition), and appearing on several platforms is stronger evidence.
+   `node scripts/signals.mjs suggest --seeds "…" --lang de --country de --sources google,bing,ddg,youtube,amazon,wikipedia --expand questions,modifiers,compare --depth 2`
+   `compare` mines "X vs / oder / alternative", revealing the alternatives buyers weigh. `--depth 2` snowballs: the strongest new phrases become seeds once more.
+3. **Measured interest, trend and seasonality:** Wikipedia page views (official API) for topics and cluster heads. Monthly attention, year-over-year change and the peak month, so you know what's rising, what's fading, and *when* to publish.
+   `node scripts/pageviews.mjs --topics "…" --lang de`
+4. **Competitor gap:** topics your competitors publish (from their sitemaps, or RSS feeds when sitemaps are blocked) that you don't cover. A topic several competitors independently invested in is validated demand.
+   `node scripts/gap.mjs --competitors "rival-a.de,rival-b.de" --mine <your folder | sitemap | domain>`
+5. **Real questions with view counts:** StackExchange (views = people who had this exact problem) and Hacker News. Best for FAQ sections, problem/solution articles and answer-engine visibility. Mostly English; translate the intent, then confirm local wording with step 2.
+   `node scripts/questions.mjs --seeds "…" --hn --since 2023`
+6. **Trends:** today's trending searches. `node scripts/signals.mjs trends --country de`. Mostly news and celebrities, so filter hard for fit.
+7. **SERPs** (web search/browsing): what ranks, which formats win, "People also ask". Do this for every cluster you plan to act on.
 
 Trending or news-driven topics are useful but perishable. Record the date found and the source, and give them an expiry (default 30 days). Phrase them so the page stays useful after the news fades ("Google AI Mode: what changes for local business websites", not "Google launched X today").
 
